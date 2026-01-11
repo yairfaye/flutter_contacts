@@ -295,6 +295,16 @@ class FlutterContacts {
     return id == null ? null : getContact(id);
   }
 
+  static Future<Contact?> openExternalPickLimitAccess() async {
+    if (Platform.isIOS) {
+      final result  = await _channel.invokeMethod('openExternalPickLimit');
+      final contact = Contact.fromJson(Map<String, dynamic>.from(result));
+      return contact;
+    } else {
+      return null;
+    }
+  }
+
   /// Opens external contact app to insert a new contact.
   ///
   /// Optionally specify a [Contact] to pre-fill the data from.
