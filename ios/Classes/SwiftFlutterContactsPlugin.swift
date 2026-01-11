@@ -613,11 +613,20 @@ public class SwiftFlutterContactsPlugin: NSObject, FlutterPlugin, FlutterStreamH
             }
         case "openExternalPick":
             DispatchQueue.main.async {
-                let contactPicker = CNContactPickerViewController()
+                let contactPicker = FlutterContactPicker()
                 contactPicker.delegate = self
                 self.rootViewController.present(contactPicker, animated: true, completion: nil)
                 self.externalResult = result
             }
+        case "openExternalPickLimit":
+            DispatchQueue.main.async {
+                let contactPicker = FlutterContactPicker()
+                contactPicker.isLimitPick = true
+                contactPicker.delegate = self
+                self.rootViewController.present(contactPicker, animated: true, completion: nil)
+                self.externalResult = result
+            }
+            
         case "openExternalInsert":
             DispatchQueue.main.async {
                 let contact = CNMutableContact()
@@ -682,17 +691,28 @@ public class SwiftFlutterContactsPlugin: NSObject, FlutterPlugin, FlutterStreamH
         }
     }
 
-    public func contactPicker(_: CNContactPickerViewController, didSelect contact: CNContact) {
+    public func contactPicker(_ picker: CNContactPickerViewController, didSelect contact: CNContact) {
         if let result = externalResult {
-            result(contact.identifier)
+             if let customPicker = picker as? FlutterContactPicker, customPicker.isLimitPick {
+                 let parsedContact = Contact(fromContact: contact)
+                result(parsedContact.toMap())
+            } else {
+                 result(contact.identifier)
+            }
             externalResult = nil
         }
     }
-
+    
     public func contactPickerDidCancel(_: CNContactPickerViewController) {
         if let result = externalResult {
             result(nil)
             externalResult = nil
         }
     }
+}
+
+
+
+class FlutterContactPicker: CNContactPickerViewController {
+    var isLimitPick: Bool = false
 }
